@@ -185,7 +185,6 @@ prompt_virtualenv() {
 
 ## Main prompt
 prompt_agnoster_main() {
-  echo "\n"
   RETVAL=$?
   CURRENT_BG='NONE'
   prompt_status
