@@ -71,14 +71,64 @@ prompt_end() {
 prompt_context() {
   local user=`whoami`
 
-  if [[ "$user" != "$DEFAULT_USER" || -n "$SSH_CONNECTION" ]]; then
-    prompt_segment $PRIMARY_FG default " %(!.%{%F{yellow}%}.)$user@%m "
-  fi
+  # if [[ "$user" != "$DEFAULT_USER" || -n "$SSH_CONNECTION" ]]; then
+    # prompt_segment $PRIMARY_FG default " %(!.%{%F{yellow}%}.)$user@%m "
+  # fi
+
+  prompt_segment $PRIMARY_FG blue " %(!.%{%F{yellow}%}.)$user"
 }
+
+# Borrow from powerline theme
+# https://github.com/davidjrice/prezto_powerline
+
+# returns the time since last git commit
+git_time_details()() {
+  # only proceed if there is actually a git repository
+  if $(git rev-parse --git-dir > /dev/null 2>&1); then
+    # only proceed if there is actually a commit
+    if [[ $(git log 2>&1 > /dev/null | grep -c "^fatal: bad default revision") == 0 ]]; then
+      # get the last commit hash
+      # lc_hash=$(git log --pretty=format:'%h' -1 2> /dev/null)
+      # get the last commit time
+      lc_time=$(git log --pretty=format:'%at' -1 2> /dev/null)
+
+      now=$(date +%s)
+      seconds_since_last_commit=$(expr $now - $lc_time)
+      # lc_time_since=$(time_since_commit $seconds_since_last_commit)
+      # seconds_since_last_commit=$(expr $1 + 0)
+
+      # totals
+      MINUTES=$(expr $seconds_since_last_commit / 60)
+      HOURS=$(expr $seconds_since_last_commit / 3600)
+
+
+      # sub-hours and sub-minutes
+      DAYS=$(expr $seconds_since_last_commit / 86400)
+      SUB_HOURS=$(expr $HOURS % 24)
+      SUB_MINUTES=$(expr $MINUTES % 60)
+
+      if [ "$HOURS" -gt 24 ]; then
+        echo "${DAYS}d${SUB_HOURS}h${SUB_MINUTES}m"
+      elif [ "$MINUTES" -gt 60 ]; then
+        echo "${HOURS}h${SUB_MINUTES}m"
+      else
+        echo "${MINUTES}m"
+      fi
+          echo "$lc_time_since"
+        else
+          echo ""
+        fi
+      else
+        echo ""
+      fi
+}
+
+# End borrow
 
 # Git: branch/detached head, dirty status
 prompt_git() {
   local color ref
+
   is_dirty() {
     test -n "$(git status --porcelain --ignore-submodules)"
   }
@@ -86,7 +136,7 @@ prompt_git() {
   if [[ -n "$ref" ]]; then
     if is_dirty; then
       color=yellow
-      ref="${ref} $PLUSMINUS"
+      ref="${ref} $PLUSMINUS $(git_time_details) "
     else
       color=green
       ref="${ref} "
@@ -103,7 +153,7 @@ prompt_git() {
 
 # Dir: current working directory
 prompt_dir() {
-  prompt_segment blue $PRIMARY_FG ' %~ '
+  prompt_segment blue $PRIMARY_FG ' %(4~|.../%1~|%~) '
 }
 
 # Status:
@@ -131,19 +181,28 @@ prompt_virtualenv() {
 
 ## Main prompt
 prompt_agnoster_main() {
+  echo "\n"
   RETVAL=$?
   CURRENT_BG='NONE'
   prompt_status
-  prompt_context
+  # prompt_context
   prompt_virtualenv
   prompt_dir
   prompt_git
   prompt_end
 }
 
+## Right side of the prompt
+prompt_agnoster_right() {
+  RETVAL=$?
+  CURRENT_BG='NONE'
+  prompt_context
+}
+
 prompt_agnoster_precmd() {
   vcs_info
   PROMPT='%{%f%b%k%}$(prompt_agnoster_main) '
+  RPROMPT='$(prompt_agnoster_right) '
 }
 
 prompt_agnoster_setup() {
