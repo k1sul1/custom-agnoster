@@ -79,7 +79,7 @@ prompt_context() {
     # prompt_segment $PRIMARY_FG default " %(!.%{%F{yellow}%}.)$user@%m "
   # fi
 
-  prompt_segment $PRIMARY_FG blue " %(!.%{%F{yellow}%}.)$user"
+  prompt_segment $PRIMARY_FG blue " %(!.%{%F{yellow}%}.)$user ($(tput cols) x $(tput lines))"
 }
 
 # Borrow from powerline theme
